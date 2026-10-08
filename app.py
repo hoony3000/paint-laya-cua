@@ -175,6 +175,10 @@ def run():
     if mode not in ("disabled", "laya"):
         raise ValueError("SELECTOR_MODE must be disabled or laya")
     target = {"kind": "window", "pid": pid, "window_id": window_id}
+    session = "paint-drawing-session"
+    # Pixel actions require a screenshot from the same session and target.
+    cua("get_window_state", {"pid": pid, "window_id": window_id,
+                             "session": session, "include_screenshot": True})
     budget = LayaBudget()
     milestone = env_int("JEV_MILESTONE_STROKES", 10)
     completed = []
@@ -192,7 +196,7 @@ def run():
         ]
         print(f"Drawing {i + 1}/{len(strokes)}: {coords}", flush=True)
         cua("drag", {
-            "target": target, "from_x": coords[0], "from_y": coords[1],
+            "target": target, "session": session, "from_x": coords[0], "from_y": coords[1],
             "to_x": coords[2], "to_y": coords[3],
             "duration_ms": 350, "steps": 20, "delivery_mode": "foreground",
         })
