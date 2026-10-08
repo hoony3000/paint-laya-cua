@@ -15,7 +15,7 @@ load_dotenv(Path(__file__).with_name(".env"))
 mcp = FastMCP("laya")
 lock = Lock()
 
-DB = Path(os.getenv("LAYA_QUOTA_DB", str(Path.home() / ".laya_mcp_quota.sqlite3")))
+DB = Path(os.getenv("LAYA_QUOTA_DB") or str(Path.home() / ".laya_mcp_quota.sqlite3"))
 CONTEXT_LIMIT = int(os.getenv("JEV_CONTEXT_MAX_TOKENS", "1024"))
 INPUT_LIMIT = int(os.getenv("JEV_MAX_INPUT_TOKENS", "700"))
 OUTPUT_RESERVE = int(os.getenv("JEV_MAX_OUTPUT_TOKENS", "128"))
