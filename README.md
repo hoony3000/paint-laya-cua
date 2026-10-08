@@ -55,3 +55,52 @@ See `.env.example`. Avoid committing `.env`, screenshots of internal apps, or se
 ## Architecture
 
 `user prompt -> internal OpenAI-compatible LLM -> validated normalized strokes -> optional Laya milestone choice -> Cua Driver CLI -> Windows Paint`
+
+## Claude Code: Laya MCP integration (Windows PowerShell)
+
+The included `laya_mcp.py` exposes the `select_ui_element` tool for Claude Code.
+It calls your internal `POST /v1/systemone` endpoint. This project does not
+provide browser access by itself; configure Playwright or your browser automation
+tool separately.
+
+1. Update the project and activate its environment:
+
+```powershell
+git pull origin main
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+2. Edit `.env` and set `LAYA_BASE_URL`, `LAYA_API_KEY`, and quota limits.
+3. Register MCP with a **stable absolute path** from the project folder:
+
+```powershell
+$python = (Resolve-Path ".\.venv\Scripts\python.exe").Path
+$server = (Resolve-Path ".\laya_mcp.py").Path
+claude mcp add --transport stdio --scope user laya -- $python $server
+claude mcp list
+```
+
+4. Start Claude Code and inspect `/mcp`. Ask it to call `select_ui_element`
+with 2-3 fabricated candidates before using real browser locators.
+
+The bridge reads credentials from the local `.env`; no keys are passed in
+the CLI invocation or repository. The quota database defaults to
+`~/.laya_mcp_quota.sqlite3` and is shared by MCP server restarts on that PC.
+It uses a 60-second sliding window, conservative token **estimate**,
+11-second minimum interval, and UTC-day request count. This does *not* account
+for other clients consuming the same shared server quota.
+
+**Token accounting note:** The bridge estimates input tokens conservatively
+using UTF-8 bytes, not the Laya tokenizer. This can reject requests that
+would fit, but is safer than undercounting. Validate the internal API's exact
+request/response schema and token billing before production use.
+
+### Example Claude instruction
+
+> Use a browser automation tool to inspect a web page. If 2 or more click
+> candidates remain ambiguous, call the Laya MCP `select_ui_element` tool
+> with stable element IDs and short descriptions, then use the chosen ID
+> to execute through the browser tool. Do not call Laya on obvious steps,
+> and do not retry immediately if a rate-limit error is returned.
+
